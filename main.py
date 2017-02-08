@@ -50,8 +50,10 @@ def over_limit_multi_lua(conn, resource, limits):
     if not hasattr(conn, 'over_limit_multi_lua'):
         conn.over_limit_multi_lua = conn.register_script(over_limit_multi_lua_)
 
-    return conn.over_limit_multi_lua(
+    result = conn.over_limit_multi_lua(
         keys=resource, args=[json.dumps(limits), time.time()])
+
+    return result
 
 
 if __name__ == '__main__':
@@ -59,10 +61,10 @@ if __name__ == '__main__':
     conn = redis.Redis(connection_pool=pool)
     counter = 10
     # 100 per hour, but not  more that 1 per second
-    limits = [(3600, 100), (1, 1)]
+    limits = [(3600, 100), (2, 2)]
 
     while counter > 0:
-        if not over_limit_multi(conn, 'resource', limits):
+        if not over_limit_multi_lua(conn, 'resource', limits):
             counter -= 1
             print "Ok"
         else:
