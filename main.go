@@ -125,13 +125,40 @@ func main() {
 		DB:       0,  // use default DB
 	})
 
-	counter := 10
-	overLimitFn := loadScript(script)
+	//counter := 10
+	//overLimitFn := loadScript(script)
+	//
+	//for counter > 0 {
+	//	if overLimitFn(client, []string{"resource"}, []int{1, 5, 0, 0}) == false {
+	//		log.Print("Ok")
+	//		counter--
+	//	}
+	//}
 
-	for counter > 0 {
-		if overLimitFn(client, []string{"resource"}, []int{1, 5, 0, 0}) == false {
-			log.Print("Ok")
-			counter--
-		}
+	counter := 1000
+	overLimitFn := loadScript(script)
+	result := make(chan time.Duration)
+	total := time.Now()
+
+	for i := 0; i < counter; i++ {
+
+		go func() {
+			start := time.Now()
+			r := overLimitFn(client, []string{"resource"}, []int{10000, 10000, 0, 0})
+
+			if r == false {
+				fmt.Println(r)
+			}
+
+			result <- time.Since(start)
+		}()
 	}
+
+	times := make([]time.Duration, 0, counter)
+	for i := 0; i < counter; i++ {
+		t := <-result
+		times = append(times, t)
+	}
+	fmt.Printf("Total time spent %v\n", time.Since(total))
+	fmt.Print(times)
 }
